@@ -40,14 +40,14 @@ pub fn get_package(package: &str, package_name: &str, ignore_cache: bool) -> Vec
             .map(| i | i.replace("\n", ""))
             .collect::<Vec<String>>();
 
-        packages.push(package.join(" "));
+        packages.push(package.join("   "));
     }
 
     if !ignore_cache {
         for (k, p) in packages.clone().into_iter().enumerate() {
             for c in get_cache(package_name) {
                 if p.contains(&c) {
-                    packages[k] = format!("{c} [Cache]", );
+                    packages[k] = format!("{c}   [Cache]", );
 
                 }
             }
@@ -76,6 +76,8 @@ fn get_cache(package: &str) -> Vec<String> {
 pub fn select_package(package: String, packages: &Vec<String>) -> usize {
     Select::with_theme(&ColorfulTheme::default())
         .with_prompt(&format!("Choose package{}", get_current_version(&package)))
+        .default(0)
+        .max_length(15)
         .items(&packages)
         .interact()
         .unwrap()
