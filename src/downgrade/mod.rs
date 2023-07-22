@@ -41,7 +41,7 @@ pub fn get_package(package: &str, package_name: &str, ignore_cache: bool) -> Vec
             .map(| i | i.replace("\n", ""))
             .collect::<Vec<String>>();
 
-        packages.push(package.join("   "));
+        packages.push(format!("{} \x1b[1;34m{}\x1b[m \x1b[1;37m{}\x1b[m", package[0], package[1], package[2..].join(" ")));
     }
 
     if !ignore_cache {
