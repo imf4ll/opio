@@ -48,7 +48,7 @@ pub fn get_package(package: &str, package_name: &str, ignore_cache: bool) -> Vec
         for (k, p) in packages.clone().into_iter().enumerate() {
             for c in get_cache(package_name) {
                 if p.contains(&c) {
-                    packages[k] = format!("{c}   [Cache]", );
+                    packages[k] = format!("{c} \x1b[1;34m[Cache]\x1b[m", );
 
                 }
             }
