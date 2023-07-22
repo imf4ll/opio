@@ -52,17 +52,17 @@ fn main() {
             let package_subject = args.package.chars().collect::<Vec<char>>()[0];
             let package_url = format!("https://archive.archlinux.org/packages/{}/{}", package_subject, args.package);
             
-            let packages = downgrader::get_package(&package_url, &args.package, args.ignore_cache);
+            let packages = downgrade::get_package(&package_url, &args.package, args.ignore_cache);
             
             println!("\x1b[1;34m✔ \x1b[1;37m{} \x1b[1;34mversions found.\x1b[m\n", packages.len());
             
-            let package = packages[downgrader::select_package(args.package, &packages)].split(" ").collect::<Vec<&str>>();
+            let package = packages[downgrade::select_package(args.package, &packages)].split(" ").collect::<Vec<&str>>();
 
             if package[1].contains("Cache") {
-                downgrader::install_package(format!("{}/{}", args.file_path, &package[0]));
+                downgrade::install_package(format!("{}/{}", args.file_path, &package[0]));
 
             } else {
-                downgrader::download_package(args.file_path, &package[0], format!("{package_url}/{}", package[0]))
+                downgrade::download_package(args.file_path, &package[0], format!("{package_url}/{}", package[0]))
 
             }
         
