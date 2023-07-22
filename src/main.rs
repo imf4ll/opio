@@ -1,5 +1,5 @@
 mod utils;
-mod downgrader;
+mod downgrade;
 mod helper;
 
 use std::io::Write;
@@ -26,7 +26,7 @@ struct Args {
 
     /// Runs in downgrade mode
     #[arg(short, long, default_value_t = false)]
-    downgrader: bool,
+    downgrade: bool,
 
     /// Runs in AUR helper mode
     #[arg(short, long, default_value_t = true)]
@@ -43,7 +43,7 @@ fn main() {
     banner();
 
     if args.package != "" {
-        if args.downgrader {
+        if args.downgrade {
             if !geteuid().is_root() {
                 error("Superuser privileges needed.");
          

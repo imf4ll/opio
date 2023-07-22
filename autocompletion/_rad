@@ -1,0 +1,31 @@
+#compdef rad
+
+_rad() {
+    local -a init
+    init=(
+        '-a:Runs in AUR helper mode'
+        '-d:Runs in downgrade mode'
+        '-h:Print help'
+        '-V:Print version'
+        '-p:Package name'
+    )
+
+    local -a fetching
+    fetching=(
+        '-p:Package name'
+        '-f:Final package download path'
+        '-i:Ignores packages from cache'
+    )
+
+    if (( CURRENT == 2 )); then
+        _describe -t commands 'commands' init
+    fi
+
+    if (( CURRENT == 3 )); then
+        _describe -t commands 'command' fetching
+    fi
+
+  return 0
+}
+
+_rad
