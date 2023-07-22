@@ -39,13 +39,3 @@ pub fn get_file_size(file: &std::fs::File) -> u64 {
         .expect(&format!("{ERROR} Failed to get file size, are you rooted?"))
         .len()
 }
-
-pub fn install_package(package: String) {
-    Command::new("sudo")
-        .arg("pacman")
-        .arg("-U")
-        .arg(package)
-        .arg("--noconfirm")
-        .spawn()
-        .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"));
-}

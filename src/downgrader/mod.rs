@@ -1,6 +1,7 @@
 use std::thread;
 use std::io::copy;
 use std::fs::{File, read_dir};
+use std::process::Command;
 
 use crate::utils::packages::*;
 use crate::utils::log::{ERROR, error};
@@ -121,4 +122,15 @@ pub fn download_package(package_path: String, package_name: &str, package: Strin
     pb.finish();
 
     install_package(format!("{}/{}", package_path, package_name));
+}
+
+pub fn install_package(package: String) {
+    Command::new("sudo")
+        .arg("pacman")
+        .arg("-U")
+        .arg(package)
+        .spawn()
+        .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"))
+        .wait()
+        .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"));
 }
