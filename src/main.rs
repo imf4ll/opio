@@ -10,7 +10,7 @@ use clap::Parser;
 use nix::unistd::geteuid;
 
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about = about(), long_about = None)]
 struct Args {
     /// Package name
     #[arg(short, long, value_name = "PACKAGE")]
@@ -39,7 +39,7 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    
+
     banner();
 
     if args.package != "" {
@@ -53,6 +53,11 @@ fn main() {
             let package_url = format!("https://archive.archlinux.org/packages/{}/{}", package_subject, args.package);
             
             let packages = downgrade::get_package(&package_url, &args.package, args.ignore_cache);
+
+            if get_current_version(&args.package) == "" {
+                println!("\x1b[1;33m⚠ Package not installed!\x1b[m\n");
+
+            }
             
             println!("\x1b[1;34m✔ \x1b[1;37m{} \x1b[1;34mversions found.\x1b[m\n", packages.len());
             
