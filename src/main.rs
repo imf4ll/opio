@@ -122,8 +122,6 @@ fn main() {
 
                     }
 
-                    prompt("Install package? [y/N]");
-
                     helper::install_package(package_name, git_url, args.file_path, args.keep);
                 }
 

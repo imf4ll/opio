@@ -698,6 +698,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "opio"
+version = "0.1.1"
+dependencies = [
+ "clap",
+ "dialoguer",
+ "indicatif",
+ "nix",
+ "reqwest",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -743,17 +754,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fe8a65d69dd0808184ebb5f836ab526bb259db23c657efa38711b1072ee47f0"
 dependencies = [
  "proc-macro2",
-]
-
-[[package]]
-name = "rad"
-version = "0.1.1"
-dependencies = [
- "clap",
- "dialoguer",
- "indicatif",
- "nix",
- "reqwest",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
-#compdef rad
+#compdef opio
 
-_rad() {
+_opio() {
     local -a init
     init=(
         '-a:Turns on AUR helper mode'
@@ -41,4 +41,4 @@ _rad() {
   return 0
 }
 
-_rad
+_opio
