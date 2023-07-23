@@ -1,7 +1,7 @@
 use std::process::Command;
 use std::env::set_current_dir;
 use std::fs::{remove_dir_all, remove_file};
-use std::io::{copy, Write};
+use std::io::copy;
 use std::fs::File;
 
 use reqwest::blocking::get;
