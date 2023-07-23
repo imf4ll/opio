@@ -71,7 +71,7 @@ $ sudo rad -d -p xsel
 
 - Downgrade 'AUR' package:
 ```sh
-$ sudo rad -a -d -p brave-bin
+$ rad -a -d -p brave-bin
 ```
 
 <br/>
