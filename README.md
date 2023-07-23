@@ -10,10 +10,10 @@
 
 <br/>
 
-[Features](#features) <br/>
-[Install](#how-to-install) <br/>
-[Arguments](#arguments) <br/>
-[Usage](#how-to-use) <br/><br/>
+- [Features](#features) <br/>
+- [Install](#how-to-install) <br/>
+- [Arguments](#arguments) <br/>
+- [Usage](#how-to-use) <br/><br/>
 
 ### Features:
 - AUR Helper with search and choose
@@ -30,6 +30,8 @@ $ cd rad/
 
 $ make install
 ```
+
+<br/>
 
 ### Arguments:
 | Name | Description | Usage |
