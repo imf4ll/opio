@@ -3,18 +3,29 @@
 _rad() {
     local -a init
     init=(
-        '-a:Runs in AUR helper mode'
-        '-d:Runs in downgrade mode'
+        '-a:Turns on AUR helper mode'
+        '-d:Turns on downgrade mode'
+        '-p:Package name'
+        '-s:Search for a package in AUR'
+        '--status:Check Archive and AUR status'
         '-h:Print help'
         '-V:Print version'
-        '-p:Package name'
     )
 
     local -a fetching
     fetching=(
         '-p:Package name'
+        '-i:Ignores packages from cache while downgrading "pacman" packages'
         '-f:Final package download path'
-        '-i:Ignores packages from cache'
+        '-d:Turns on downgrade mode'
+        '-s:Search for a package in AUR'
+    )
+
+    local -a others
+    others=(
+        '-k:Keep AUR package after installing'
+        '-f:Final package download path'
+        '-p:Package name'
     )
 
     if (( CURRENT == 2 )); then
@@ -24,6 +35,8 @@ _rad() {
     if (( CURRENT == 3 )); then
         _describe -t commands 'command' fetching
     fi
+
+    _describe -t commands 'command' others
 
   return 0
 }
