@@ -128,7 +128,7 @@ pub fn install_package(package: String) {
     Command::new("sudo")
         .arg("pacman")
         .arg("-U")
-        .arg(package)
+        .arg(&package)
         .spawn()
         .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"))
         .wait()
