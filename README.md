@@ -17,8 +17,8 @@
 
 ### Features:
 - AUR Helper with search and choose
-- Pacman's package downgrader
 - AUR's package downgrader
+- Pacman's package downgrader
 
 <br/>
 
@@ -38,10 +38,12 @@ $ make install
 |------|-------------|-------|
 | -p, --package | Package name | PACKAGE |
 | -f, --file-path | Final package download path | PATH |
-| -i, --ignore-cache | Ignores packages from cache | - |
+| -i, --ignore-cache | Ignores packages from cache while downgrading 'pacman' packages | - |
 | -d, --downgrade | Turns on downgrade mode | - |
 | -a, --aur | Turns on AUR mode | - |
-| -s, --search | Runs AUR in search mode | - |
+| -s, --search | Search for a package in AUR | - |
+| --status | Check Archive and AUR status | - |
+| -k, --keep | Keep AUR package after installing | - |
 | -h, --help | Print help | - |
 | -V, --version | Print version | - |
 
@@ -72,6 +74,20 @@ $ sudo rad -d -p xsel
 - Downgrade 'AUR' package:
 ```sh
 $ rad -a -d -p brave-bin
+```
+
+<br/>
+
+- Install AUR package and keep files:
+```sh
+$ rad -p brave-bin -k
+```
+
+<br/>
+
+- Install AUR package and save files in specific directory:
+```sh
+$ rad -p brave-bin -f path/to/directory
 ```
 
 <br/>
