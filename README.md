@@ -1,5 +1,7 @@
 <div align="center">
   <img src="https://dinopixel.com/preload/0620/minecraft-poppy.png" width="128" />
+
+  <img src="./assets/showcase.gif" />
 </div>
 
 <br/>
