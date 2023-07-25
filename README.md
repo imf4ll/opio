@@ -1,7 +1,5 @@
 <div align="center">
   <img src="https://dinopixel.com/preload/0620/minecraft-poppy.png" width="128" />
-
-  <img src="./assets/showcase.gif" />
 </div>
 
 <br/>
@@ -10,6 +8,10 @@
 - [Install](#how-to-install) <br/>
 - [Arguments](#arguments) <br/>
 - [Usage](#how-to-use) <br/><br/>
+
+<div align="center">
+  <img src="./assets/showcase.gif" />
+</div>
 
 ### Features:
 - Pacman's package downgrade
