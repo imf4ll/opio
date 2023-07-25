@@ -7,7 +7,7 @@ use std::fs::File;
 use reqwest::blocking::get;
 use dialoguer::{Select, theme::ColorfulTheme};
 
-use crate::utils::log::*;
+use crate::utils::{log::*, pkgbuild::*};
 
 pub fn get_package(package_name: &str) -> (String, String, String) {
     let package_req = get(format!("https://aur.archlinux.org/packages/{package_name}"))
@@ -39,7 +39,7 @@ pub fn get_package(package_name: &str) -> (String, String, String) {
     (package[0].to_string(), package[1].to_string(), git_url.to_string())
 }
 
-pub fn downgrade_package(package_name: &str) -> Vec<String> {
+pub fn get_downgrade(package_name: &str) -> Vec<String> {
     let package_req = get(format!("https://aur.archlinux.org/cgit/aur.git/log/?h={package_name}"))
         .expect(&format!("{ERROR} Invalid package."));
 
@@ -108,7 +108,7 @@ pub fn downgrade_package(package_name: &str) -> Vec<String> {
     packages
 }
 
-pub fn install_package(package_name: String, git_url: String, file_path: String, keep: bool) {
+pub fn install_package(package_name: String, git_url: String, file_path: String, keep: bool, pkgbuild: bool) {
     Command::new("git")
         .arg("clone")
         .arg(git_url)
@@ -119,6 +119,8 @@ pub fn install_package(package_name: String, git_url: String, file_path: String,
         .unwrap();
 
     set_current_dir(format!("{file_path}/{package_name}")).unwrap();
+
+    if pkgbuild { read_pkgbuild("./PKGBUILD"); }
 
     Command::new("makepkg")
         .arg("-si")
@@ -217,7 +219,7 @@ pub fn search_package(query: &String) -> Vec<String> {
             packages.push(format!("{name} [{version}] [{date}] [FLAGGED OUTDATED]"));
         
         } else {
-            packages.push(format!("{name} \x1b[1;34m[{version}]\x1b[m \x1b[1;37m[{date}]\x1b[m"));
+            packages.push(format!("{name} \x1b[1;34m[{version}]\x1b[m \x1b[1;37m{date}\x1b[m"));
         
         }
     }
@@ -235,7 +237,7 @@ pub fn select_package(packages: &Vec<String>) -> usize {
         .unwrap()
 }
 
-pub fn install_downgrade(commit_url: &str, file_path: String, keep: bool) {
+pub fn install_downgrade(commit_url: &str, file_path: String, keep: bool, pkgbuild: bool) {
     let commit_req = get(format!("https://aur.archlinux.org{}", commit_url.replace("amp;", "")))
         .expect(&format!("{ERROR} Failed on search."))
         .text()
@@ -247,10 +249,10 @@ pub fn install_downgrade(commit_url: &str, file_path: String, keep: bool) {
         .split("'")
         .collect::<Vec<&str>>()[0]);
 
-    download_package(download_url.split("/snapshot/").collect::<Vec<&str>>()[1].to_string(), download_url, file_path, keep);
+    download_package(download_url.split("/snapshot/").collect::<Vec<&str>>()[1].to_string(), download_url, file_path, keep, pkgbuild);
 }
 
-pub fn download_package(commit_name: String, download_url: String, file_path: String, keep: bool) {
+pub fn download_package(commit_name: String, download_url: String, file_path: String, keep: bool, pkgbuild: bool) {
     let mut file = File::create(format!("{file_path}/{commit_name}"))
         .expect(&format!("{ERROR} Failed to create commit file, are you rooted?"));
     
@@ -262,10 +264,10 @@ pub fn download_package(commit_name: String, download_url: String, file_path: St
     copy(&mut data, &mut file)
         .expect(&format!("{ERROR} Failed to write package, are you rooted?"));
 
-    install_commit_package(commit_name, file_path, keep);
+    install_commit_package(commit_name, file_path, keep, pkgbuild);
 }
 
-pub fn install_commit_package(commit_name: String, file_path: String, keep: bool) {
+pub fn install_commit_package(commit_name: String, file_path: String, keep: bool, pkgbuild: bool) {
     let package_name = commit_name.split(".tar.gz").collect::<Vec<&str>>()[0];
 
     set_current_dir(&file_path).unwrap();
@@ -279,6 +281,8 @@ pub fn install_commit_package(commit_name: String, file_path: String, keep: bool
         .unwrap();
 
     set_current_dir(format!("{file_path}/{package_name}")).unwrap();
+    
+    if pkgbuild { read_pkgbuild("./PKGBUILD"); }
 
     Command::new("makepkg")
         .arg("-si")
