@@ -1,7 +1,7 @@
 mod utils;
 mod downgrade;
 mod helper;
-mod update;
+mod upgrade;
 
 use crate::utils::{packages::*, log::*, banner::*, status::*};
 
@@ -71,17 +71,20 @@ fn main() {
         }
     }
 
-    if args.downgrade == "" && args.update == "" && args.install == "" && args.search == "" {
-        error("A mode is required: downgrade, update, search or install (Check opio -h to more options)");
-
-    }
-
     if args.upgrade {
-        update::self_upgrade();
+        upgrade::self_upgrade();
+        
+        std::process::exit(2);
 
     } else if args.status {
         get_status();
     
+        std::process::exit(2);
+    }
+    
+    if args.downgrade == "" && args.update == "" && args.install == "" && args.search == "" {
+        error("A mode is required: downgrade, update, search or install (Check opio -h to more options)");
+
     } else if args.install != "" {
         wait("Searching package on \x1b[1;37maur.archlinux.org...");
         
