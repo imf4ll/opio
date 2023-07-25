@@ -46,14 +46,14 @@ $ cargo install --git https://github.com/imf4ll/opio.git
 ### How to use:
 - Install first valid package from AUR:
 ```sh
-$ opio -i allacrity
+$ opio -i alacritty
 ```
 
 <br/>
 
 - Search and choose through AUR:
 ```sh
-$ opio -s allacrity
+$ opio -s alacritty
 ```
 
 <br/>
