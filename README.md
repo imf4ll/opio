@@ -10,19 +10,16 @@
 - [Usage](#how-to-use) <br/><br/>
 
 ### Features:
+- Pacman's package downgrade
 - AUR Helper with search and choose
-- AUR's package downgrader
-- Pacman's package downgrader
+- AUR's package downgrade
+- AUR's package update
 
 <br/>
 
 ### How to install:
-```
-$ git clone https://github.com/imf4ll/opio.git
-
-$ cd opio/
-
-$ make install
+```sh
+$ cargo install --git https://github.com/imf4ll/opio.git
 ```
 
 <br/>
@@ -30,58 +27,54 @@ $ make install
 ### Arguments:
 | Name | Description | Usage |
 |------|-------------|-------|
-| -p, --package | Package name | PACKAGE |
+| -i, --install | Install first valid package from AUR | PACKAGE |
+| -d, --downgrade | Turns on downgrade mode | PACKAGE |
+| -a, --aur | Prioritize AUR mode | - |
+| -u, --update | Update a package from AUR to latest version | PACKAGE |
+| -s, --search | Search for a package in AUR | PACKAGE |
 | -f, --file-path | Final package download path | PATH |
-| -i, --ignore-cache | Ignores packages from cache while downgrading 'pacman' packages | - |
-| -d, --downgrade | Turns on downgrade mode | - |
-| -a, --aur | Turns on AUR mode | - |
-| -s, --search | Search for a package in AUR | - |
-| --status | Check Archive and AUR status | - |
 | -k, --keep | Keep AUR package after installing | - |
+| --ignore-cache | Ignores packages from cache while downgrading 'pacman' packages | - |
+| --pkgbuild | Shows PKGBUILD before install | - |
+| --status | Check Archive and AUR status | - |
+| --upgrade | Self update 'opio' to latest version | - |
 | -h, --help | Print help | - |
 | -V, --version | Print version | - |
 
 <br/>
 
 ### How to use:
-- Install first valid package:
-```bash
-$ opio -p allacrity
+- Install first valid package from AUR:
+```sh
+$ opio -i allacrity
 ```
 
 <br/>
 
 - Search and choose through AUR:
-```bash
-$ opio -s -p allacrity
+```sh
+$ opio -s allacrity
+```
+
+<br/>
+
+- Update a package from AUR to latest version
+```sh
+$ opio -u brave-bin
 ```
 
 <br/>
 
 - Downgrade 'pacman' package: (REQUIRES ROOT PRIVILEGES)
-```bash
-$ sudo opio -d -p xsel
+```sh
+$ sudo opio -d xsel
 ```
 
 <br/>
 
 - Downgrade 'AUR' package:
 ```sh
-$ opio -a -d -p brave-bin
-```
-
-<br/>
-
-- Install AUR package and keep files:
-```sh
-$ opio -p brave-bin -k
-```
-
-<br/>
-
-- Install AUR package and save files in specific directory:
-```sh
-$ opio -p brave-bin -f path/to/directory
+$ opio -a -d brave-bin
 ```
 
 <br/>

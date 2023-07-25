@@ -3,42 +3,45 @@
 _opio() {
     local -a init
     init=(
+        '-i:Install first valid package from AUR'
+        '--install:Install first valid package from AUR'
         '-a:Turns on AUR helper mode'
+        '--aur:Turns on AUR helper mode'
         '-d:Turns on downgrade mode'
-        '-p:Package name'
+        '--downgrade:Turns on downgrade mode'
         '-s:Search for a package in AUR'
-        '--status:Check Archive and AUR status'
+        '--search:Search for a package in AUR'
+        '-u:Update a package from AUR to latest version'
+        '--update:Update a package from AUR to latest version'
         '-h:Print help'
+        '--help:Print help'
         '-V:Print version'
-    )
-
-    local -a fetching
-    fetching=(
-        '-p:Package name'
-        '-i:Ignores packages from cache while downgrading "pacman" packages'
-        '-f:Final package download path'
-        '-d:Turns on downgrade mode'
-        '-s:Search for a package in AUR'
+        '--version:Print version'
+        '--upgrade:Self update "opio" to latest version'
+        '--status:Check Archive and AUR status'
     )
 
     local -a others
     others=(
+        '-a:Turns on AUR helper mode'
+        '--aur:Turns on AUR helper mode'
         '-k:Keep AUR package after installing'
+        '--keep:Keep AUR package after installing'
         '-f:Final package download path'
-        '-p:Package name'
+        '--file-path:Final package download path'
+        '--pkgbuild:Shows PKGBUILD before install'
+        '--ignore-cache:Ignores packages from cache while downgrading "pacman" packages'
     )
 
     if (( CURRENT == 2 )); then
         _describe -t commands 'commands' init
     fi
 
-    if (( CURRENT == 3 )); then
-        _describe -t commands 'command' fetching
+    if (( CURRENT >= 4 )); then
+        _describe -t commands 'command' others
     fi
 
-    _describe -t commands 'command' others
-
-  return 0
+    return 0
 }
 
 _opio
