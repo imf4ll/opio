@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://dinopixel.com/preload/0620/minecraft-poppy.png" width="256" />
+  <img src="https://dinopixel.com/preload/0620/minecraft-poppy.png" width="160" />
 </div>
 
 <br/>
