@@ -26,6 +26,15 @@
 $ cargo install --git https://github.com/imf4ll/opio.git
 ```
 
+or with autocompletion:
+```sh
+$ git clone https://github.com/imf4ll/opio.git
+
+$ cd opio/
+
+$ make install
+```
+
 <br/>
 
 ### Arguments:
