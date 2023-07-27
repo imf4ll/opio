@@ -1,25 +1,24 @@
-use std::thread;
-use std::io::copy;
-use std::fs::{File, read_dir};
+use std::fs::read_dir;
 use std::process::Command;
 
 use crate::utils::packages::*;
 use crate::utils::log::{ERROR, error};
 
-use reqwest::blocking::get;
+use reqwest::get;
 use dialoguer::{Select, theme::ColorfulTheme};
 use indicatif::{ProgressBar, ProgressStyle};
+use futures::StreamExt;
 
-pub fn get_package(package: &str, package_name: &str, ignore_cache: bool) -> Vec<String> {
+pub async fn get_package(package: &str, package_name: &str, ignore_cache: bool) -> Result<Vec<String>, reqwest::Error> {
     let packages_req = get(package)
-        .expect(&format!("{ERROR} Failed to get package, are you sure that the name is correct?"));
+        .await?;
 
     if packages_req.status() != 200 {
         error("Invalid package.");
 
     }
 
-    let packages_data = packages_req.text().expect(&format!("{ERROR} Failed to get package data."));
+    let packages_data = packages_req.text().await?;
 
     let mut packages: Vec<String> = vec![];
 
@@ -55,7 +54,7 @@ pub fn get_package(package: &str, package_name: &str, ignore_cache: bool) -> Vec
         }
     }
 
-    reversed(&packages)
+    Ok(reversed(&packages))
 }
 
 fn get_cache(package: &str) -> Vec<String> {
@@ -84,12 +83,13 @@ pub fn select_package(package: String, packages: &Vec<String>) -> usize {
         .unwrap()
 }
 
-pub fn download_package(package_path: String, package_name: &str, package: String) {
-    let file = File::create(format!("{package_path}/{package_name}"))
+pub async fn download_package(package_path: String, package_name: &str, package: String, no_confirm: bool) -> Result<(), reqwest::Error> {
+    let file = tokio::fs::File::create(format!("{package_path}/{package_name}"))
+        .await
         .expect(&format!("{ERROR} Failed to create package file, are you rooted?"));
-    
-    let mut data = get(package)
-        .expect(&format!("{ERROR} Failed to get package."));
+
+    let data = get(&package)
+        .await?;
 
     let total_size = data
         .content_length()
@@ -103,34 +103,55 @@ pub fn download_package(package_path: String, package_name: &str, package: Strin
         .progress_chars("❚."));
 
     println!("\n\x1b[1;34m✔ Downloading:\x1b[m {package_name}...\n");
+ 
 
-    thread::spawn({
-        let mut file = file.try_clone().unwrap();
+    
+    tokio::task::spawn({
+        let mut file = file.try_clone().await.unwrap();
+        let mut bytes_stream = data.bytes_stream();
 
-        move || {
-            copy(&mut data, &mut file)
-                .expect(&format!("{ERROR} Failed to write package, are you rooted?"));
-        }    
+        async move {
+            while let Some(stream) = bytes_stream.next().await {
+                tokio::io::copy(&mut stream.unwrap().as_ref(), &mut file)
+                    .await
+                    .expect(&format!("{ERROR} Failed to write package, are you rooted?"));
+            }
+        }
     });
 
-    while get_file_size(&file) < total_size {
-        let file_size = get_file_size(&file);
+    while get_file_size(&file).await < total_size {
+        let file_size = get_file_size(&file).await;
 
         pb.set_position(file_size);
     }
-    
+
     pb.finish();
 
-    install_package(format!("{}/{}", package_path, package_name));
+    install_package(format!("{}/{}", package_path, package_name), no_confirm);
+
+    Ok(())
 }
 
-pub fn install_package(package: String) {
-    Command::new("sudo")
-        .arg("pacman")
-        .arg("-U")
-        .arg(&package)
-        .spawn()
-        .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"))
-        .wait()
-        .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"));
+pub fn install_package(package: String, noconfirm: bool) {
+    if noconfirm {
+        Command::new("sudo")
+            .arg("pacman")
+            .arg("-U")
+            .arg(&package)
+            .arg("--noconfirm")
+            .spawn()
+            .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"))
+            .wait()
+            .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"));
+        
+    } else {
+        Command::new("sudo")
+            .arg("pacman")
+            .arg("-U")
+            .arg(&package)
+            .spawn()
+            .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"))
+            .wait()
+            .expect(&format!("{ERROR} Failed to run pacman as sudo, are you rooted?"));
+    }
 }
