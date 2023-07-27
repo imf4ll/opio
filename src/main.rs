@@ -152,7 +152,7 @@ async fn main() -> Result<(), reqwest::Error> {
                 .trim()
         ));
 
-        aurr::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild, args.noconfirm);
+        aur::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild, args.noconfirm);
     
     } else if args.downgrade != "" {
         if args.aur {
