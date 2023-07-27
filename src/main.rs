@@ -1,5 +1,5 @@
 mod utils;
-mod downgrade;
+mod archive;
 mod helper;
 mod upgrade;
 
@@ -54,9 +54,14 @@ struct Args {
     /// Self update 'opio' to latest version
     #[arg(long, default_value_t = false)]
     upgrade: bool,
+
+    /// Install package without prompt confirmation
+    #[arg(long, default_value_t = false)]
+    noconfirm: bool,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), reqwest::Error> {
     let mut args = Args::parse();
 
     banner();
@@ -72,12 +77,12 @@ fn main() {
     }
 
     if args.upgrade {
-        upgrade::self_upgrade();
+        upgrade::self_upgrade().await?;
         
         std::process::exit(2);
 
     } else if args.status {
-        get_status();
+        get_status().await?;
     
         std::process::exit(2);
     }
@@ -88,7 +93,7 @@ fn main() {
     } else if args.install != "" {
         wait("Searching package on \x1b[1;37maur.archlinux.org...");
         
-        let (package_name, package_version, git_url) = helper::get_package(&args.install);
+        let (package_name, package_version, git_url) = helper::get_package(&args.install).await?;
 
         success(&format!("Package found:\x1b[1;37m {package_name} [{package_version}]"));
 
@@ -99,12 +104,12 @@ fn main() {
 
         }
 
-        helper::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild);
+        helper::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild, args.noconfirm);
      
     } else if args.search != "" {
         wait("Searching package on \x1b[1;37maur.archlinux.org...");
         
-        let packages = helper::search_package(&args.search);
+        let packages = helper::search_package(&args.search).await?;
 
         if packages.len() == 0 {
             error("Invalid query.");
@@ -124,12 +129,12 @@ fn main() {
         
         let package_name = package.split(" ").collect::<Vec<&str>>()[0];
         
-        helper::install_package(package_name.to_string(), format!("https://aur.archlinux.org/{}.git", package_name), args.file_path, args.keep, args.pkgbuild);
+        helper::install_package(package_name.to_string(), format!("https://aur.archlinux.org/{}.git", package_name), args.file_path, args.keep, args.pkgbuild, args.noconfirm);
     
     } else if args.update != "" {
         wait("Searching for latest version on \x1b[1;37maur.archlinux.org...");
 
-        let (package_name, package_version, git_url) = helper::get_package(&args.update);
+        let (package_name, package_version, git_url) = helper::get_package(&args.update).await?;
 
         let current_version = get_current_version(&args.update);
 
@@ -147,13 +152,13 @@ fn main() {
                 .trim()
         ));
 
-        helper::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild);
+        helper::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild, args.noconfirm);
     
     } else if args.downgrade != "" {
         if args.aur {
             wait("Searching package on \x1b[1;37maur.archlinux.org...");
             
-            let packages = helper::get_downgrade(&args.downgrade);
+            let packages = helper::get_downgrade(&args.downgrade).await?;
 
             success(&format!("Listing last \x1b[1;37m{} \x1b[1;34mversions.", packages.len()));
 
@@ -168,7 +173,9 @@ fn main() {
                 .map(| i | i.split("[.]").collect::<Vec<&str>>()[..3].join(" "))
                 .collect::<Vec<String>>())];
 
-            helper::install_downgrade(package.split("[.]").collect::<Vec<&str>>()[3], args.file_path, args.keep, args.pkgbuild);        
+            helper::install_downgrade(package.split("[.]").collect::<Vec<&str>>()[3], args.file_path, args.keep, args.pkgbuild, args.noconfirm)
+                .await
+                .expect(&format!("{ERROR} Failed to install downgrade."));
         
         } else {
             if !geteuid().is_root() {
@@ -181,7 +188,7 @@ fn main() {
 
             wait("Searching package on \x1b[1;37marchive.archlinux.org...");
 
-            let packages = downgrade::get_package(&package_url, &args.downgrade, args.ignore_cache);
+            let packages = archive::get_package(&package_url, &args.downgrade, args.ignore_cache).await?;
 
             if get_current_version(&args.downgrade) == "" {
                 warning("Package not installed!");
@@ -190,16 +197,17 @@ fn main() {
 
             success(&format!("\x1b[1;37m{} \x1b[1;34mversions found.", packages.len()));
             
-            let package = packages[downgrade::select_package(args.downgrade, &packages)].split(" ").collect::<Vec<&str>>();
+            let package = packages[archive::select_package(args.downgrade, &packages)].split(" ").collect::<Vec<&str>>();
 
             if package[1].contains("Cache") {
-                downgrade::install_package(format!("/var/cache/pacman/pkg/{}", package[0]));
+                archive::install_package(format!("/var/cache/pacman/pkg/{}", package[0]), args.noconfirm);
 
             } else {
-                downgrade::download_package(args.file_path, &package[0], format!("{package_url}/{}", package[0]));
+                archive::download_package(args.file_path, &package[0], format!("{package_url}/{}", package[0]), args.noconfirm).await?;
 
             }
         }
-    
-    } 
+    }
+
+    Ok(())
 }
