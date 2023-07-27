@@ -1,6 +1,6 @@
 use std::process::Command;
 
-use reqwest::blocking::Client;
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 use crate::utils::log::*;
@@ -10,7 +10,7 @@ struct Repo {
     tag_name: String,
 }
 
-pub fn self_upgrade() {
+pub async fn self_upgrade() -> Result<(), reqwest::Error> {
     let current_version = env!("CARGO_PKG_VERSION");
 
     let latest_version_req = Client::builder()
@@ -19,9 +19,9 @@ pub fn self_upgrade() {
         .unwrap()
         .get("https://api.github.com/repos/imf4ll/opio/releases/latest")
         .send()
-        .unwrap()
+        .await?
         .json::<Repo>()
-        .unwrap();
+        .await?;
         
     let latest_version = latest_version_req.tag_name
         .split("v")
@@ -48,4 +48,6 @@ pub fn self_upgrade() {
         error("Already up to date, aborting.");
 
     }
+
+    Ok(())
 }

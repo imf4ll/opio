@@ -1,17 +1,16 @@
 use std::process::Command;
 use std::env::set_current_dir;
 use std::fs::{remove_dir_all, remove_file};
-use std::io::copy;
-use std::fs::File;
 
-use reqwest::blocking::get;
+use futures::StreamExt;
+use reqwest::get;
 use dialoguer::{Select, theme::ColorfulTheme};
 
 use crate::utils::{log::*, pkgbuild::*};
 
-pub fn get_package(package_name: &str) -> (String, String, String) {
+pub async fn get_package(package_name: &str) -> Result<(String, String, String), reqwest::Error> {
     let package_req = get(format!("https://aur.archlinux.org/packages/{package_name}"))
-        .expect(&format!("{ERROR} Invalid package."));
+        .await?;
 
     let status = package_req.status();
 
@@ -20,7 +19,7 @@ pub fn get_package(package_name: &str) -> (String, String, String) {
 
     }
 
-    let data = package_req.text().unwrap();
+    let data = package_req.text().await?;
 
     let package = &data
         .split("Package Details: ")
@@ -36,12 +35,12 @@ pub fn get_package(package_name: &str) -> (String, String, String) {
         .split("\"")
         .collect::<Vec<&str>>()[0];
 
-    (package[0].to_string(), package[1].to_string(), git_url.to_string())
+    Ok((package[0].to_string(), package[1].to_string(), git_url.to_string()))
 }
 
-pub fn get_downgrade(package_name: &str) -> Vec<String> {
+pub async fn get_downgrade(package_name: &str) -> Result<Vec<String>, reqwest::Error> {
     let package_req = get(format!("https://aur.archlinux.org/cgit/aur.git/log/?h={package_name}"))
-        .expect(&format!("{ERROR} Invalid package."));
+        .await?;
 
     let status = package_req.status();
 
@@ -50,7 +49,7 @@ pub fn get_downgrade(package_name: &str) -> Vec<String> {
 
     }
 
-    let data = package_req.text().unwrap();
+    let data = package_req.text().await?;
 
     let packages_body = data
         .split("<table class='list nowrap'>")
@@ -105,10 +104,10 @@ pub fn get_downgrade(package_name: &str) -> Vec<String> {
         packages.push(package_str);
     }
 
-    packages
+    Ok(packages)
 }
 
-pub fn install_package(package_name: String, git_url: String, file_path: String, keep: bool, pkgbuild: bool) {
+pub fn install_package(package_name: String, git_url: String, file_path: String, keep: bool, pkgbuild: bool, noconfirm: bool) {
     Command::new("git")
         .arg("clone")
         .arg(git_url)
@@ -122,12 +121,23 @@ pub fn install_package(package_name: String, git_url: String, file_path: String,
 
     if pkgbuild { read_pkgbuild("./PKGBUILD"); }
 
-    Command::new("makepkg")
-        .arg("-si")
-        .spawn()
-        .unwrap()
-        .wait()
-        .unwrap();
+    if noconfirm {
+        Command::new("makepkg")
+            .arg("-si")
+            .arg("--noconfirm")
+            .spawn()
+            .unwrap()
+            .wait()
+            .unwrap();
+
+    } else {
+        Command::new("makepkg")
+            .arg("-si")
+            .spawn()
+            .unwrap()
+            .wait()
+            .unwrap();
+    }
 
     if !keep {
         remove_dir_all(format!("{file_path}/{package_name}")).expect(&format!("\n{ERROR} Failed to clean package files."));
@@ -135,13 +145,13 @@ pub fn install_package(package_name: String, git_url: String, file_path: String,
     }
 }
 
-pub fn search_package(query: &String) -> Vec<String> {
+pub async fn search_package(query: &String) -> Result<Vec<String>, reqwest::Error> {
     let mut packages: Vec<String> = vec![];
 
     let data = get(format!("https://aur.archlinux.org/packages?K={query}&SeB=n"))
-        .expect(&format!("{ERROR} Failed on search."))
+        .await?
         .text()
-        .unwrap();
+        .await?;
 
     let mut _packages_body = "";
 
@@ -153,7 +163,7 @@ pub fn search_package(query: &String) -> Vec<String> {
             .collect::<Vec<&str>>()[0];
     
     } else {
-        return packages;
+        return Ok(packages);
 
     }
     
@@ -216,15 +226,15 @@ pub fn search_package(query: &String) -> Vec<String> {
         }
 
         if outdated {
-            packages.push(format!("{name} [{version}] [{date}] [FLAGGED OUTDATED]"));
+            packages.push(format!("{name} \x1b[1;34m[{version}] \x1b[1;37m{date} \x1b[1;31m[FLAGGED OUTDATED]\x1b[m"));
         
         } else {
-            packages.push(format!("{name} \x1b[1;34m[{version}]\x1b[m \x1b[1;37m{date}\x1b[m"));
+            packages.push(format!("{name} \x1b[1;34m[{version}] \x1b[1;37m{date}\x1b[m"));
         
         }
     }
 
-    packages
+    Ok(packages)
 }
 
 pub fn select_package(packages: &Vec<String>) -> usize {
@@ -237,11 +247,11 @@ pub fn select_package(packages: &Vec<String>) -> usize {
         .unwrap()
 }
 
-pub fn install_downgrade(commit_url: &str, file_path: String, keep: bool, pkgbuild: bool) {
+pub async fn install_downgrade(commit_url: &str, file_path: String, keep: bool, pkgbuild: bool, noconfirm: bool) -> Result<(), reqwest::Error> {
     let commit_req = get(format!("https://aur.archlinux.org{}", commit_url.replace("amp;", "")))
-        .expect(&format!("{ERROR} Failed on search."))
+        .await?
         .text()
-        .unwrap();
+        .await?;
 
     let download_url = format!("https://aur.archlinux.org{}", commit_req
         .split("<th>download</th><td colspan='2' class='oid'><a href='")
@@ -249,25 +259,30 @@ pub fn install_downgrade(commit_url: &str, file_path: String, keep: bool, pkgbui
         .split("'")
         .collect::<Vec<&str>>()[0]);
 
-    download_package(download_url.split("/snapshot/").collect::<Vec<&str>>()[1].to_string(), download_url, file_path, keep, pkgbuild);
-}
+    let commit_name = download_url.split("/snapshot/").collect::<Vec<&str>>()[1].to_string();
 
-pub fn download_package(commit_name: String, download_url: String, file_path: String, keep: bool, pkgbuild: bool) {
-    let mut file = File::create(format!("{file_path}/{commit_name}"))
+    let mut file = tokio::fs::File::create(format!("{file_path}/{commit_name}"))
+        .await
         .expect(&format!("{ERROR} Failed to create commit file, are you rooted?"));
     
     println!("\n\x1b[1;34m✔ Downloading:\x1b[m {commit_name}...\n");
     
     let mut data = get(download_url)
-        .expect(&format!("{ERROR} Failed to get package."));
+        .await?
+        .bytes_stream();
 
-    copy(&mut data, &mut file)
-        .expect(&format!("{ERROR} Failed to write package, are you rooted?"));
+    while let Some(stream) = data.next().await {
+        tokio::io::copy(&mut stream?.as_ref(), &mut file)
+            .await
+            .expect(&format!("{ERROR} Failed to write package, are you rooted?"));
+    }
 
-    install_commit_package(commit_name, file_path, keep, pkgbuild);
+    install_commit_package(commit_name, file_path, keep, pkgbuild, noconfirm);
+
+    Ok(())
 }
 
-pub fn install_commit_package(commit_name: String, file_path: String, keep: bool, pkgbuild: bool) {
+pub fn install_commit_package(commit_name: String, file_path: String, keep: bool, pkgbuild: bool, noconfirm: bool) {
     let package_name = commit_name.split(".tar.gz").collect::<Vec<&str>>()[0];
 
     set_current_dir(&file_path).unwrap();
@@ -283,13 +298,25 @@ pub fn install_commit_package(commit_name: String, file_path: String, keep: bool
     set_current_dir(format!("{file_path}/{package_name}")).unwrap();
     
     if pkgbuild { read_pkgbuild("./PKGBUILD"); }
+    
+    if noconfirm {
+        Command::new("makepkg")
+            .arg("-si")
+            .arg("--noconfirm")
+            .spawn()
+            .unwrap()
+            .wait()
+            .unwrap();
 
-    Command::new("makepkg")
-        .arg("-si")
-        .spawn()
-        .unwrap()
-        .wait()
-        .unwrap();
+    } else {
+        Command::new("makepkg")
+            .arg("-si")
+            .spawn()
+            .unwrap()
+            .wait()
+            .unwrap();
+
+    }
 
     set_current_dir("../").unwrap();
       

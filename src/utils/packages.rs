@@ -33,9 +33,10 @@ pub fn reversed(vector: &Vec<String>) -> Vec<String> {
     reverse
 }
 
-pub fn get_file_size(file: &std::fs::File) -> u64 {
+pub async fn get_file_size(file: &tokio::fs::File) -> u64 {
     file
         .metadata()
+        .await
         .expect(&format!("{ERROR} Failed to get file size, are you rooted?"))
         .len()
 }
