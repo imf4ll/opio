@@ -1,6 +1,6 @@
 mod utils;
 mod archive;
-mod helper;
+mod aur;
 mod upgrade;
 
 use crate::utils::{packages::*, log::*, banner::*, status::*};
@@ -93,7 +93,7 @@ async fn main() -> Result<(), reqwest::Error> {
     } else if args.install != "" {
         wait("Searching package on \x1b[1;37maur.archlinux.org...");
         
-        let (package_name, package_version, git_url) = helper::get_package(&args.install).await?;
+        let (package_name, package_version, git_url) = aur::get_package(&args.install).await?;
 
         success(&format!("Package found:\x1b[1;37m {package_name} [{package_version}]"));
 
@@ -104,12 +104,12 @@ async fn main() -> Result<(), reqwest::Error> {
 
         }
 
-        helper::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild, args.noconfirm);
+        aur::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild, args.noconfirm);
      
     } else if args.search != "" {
         wait("Searching package on \x1b[1;37maur.archlinux.org...");
         
-        let packages = helper::search_package(&args.search).await?;
+        let packages = aur::search_package(&args.search).await?;
 
         if packages.len() == 0 {
             error("Invalid query.");
@@ -125,16 +125,16 @@ async fn main() -> Result<(), reqwest::Error> {
 
         }
 
-        let package = packages[helper::select_package(&packages)].clone();
+        let package = packages[aur::select_package(&packages)].clone();
         
         let package_name = package.split(" ").collect::<Vec<&str>>()[0];
         
-        helper::install_package(package_name.to_string(), format!("https://aur.archlinux.org/{}.git", package_name), args.file_path, args.keep, args.pkgbuild, args.noconfirm);
+        aur::install_package(package_name.to_string(), format!("https://aur.archlinux.org/{}.git", package_name), args.file_path, args.keep, args.pkgbuild, args.noconfirm);
     
     } else if args.update != "" {
         wait("Searching for latest version on \x1b[1;37maur.archlinux.org...");
 
-        let (package_name, package_version, git_url) = helper::get_package(&args.update).await?;
+        let (package_name, package_version, git_url) = aur::get_package(&args.update).await?;
 
         let current_version = get_current_version(&args.update);
 
@@ -152,13 +152,13 @@ async fn main() -> Result<(), reqwest::Error> {
                 .trim()
         ));
 
-        helper::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild, args.noconfirm);
+        aurr::install_package(package_name, git_url, args.file_path, args.keep, args.pkgbuild, args.noconfirm);
     
     } else if args.downgrade != "" {
         if args.aur {
             wait("Searching package on \x1b[1;37maur.archlinux.org...");
             
-            let packages = helper::get_downgrade(&args.downgrade).await?;
+            let packages = aur::get_downgrade(&args.downgrade).await?;
 
             success(&format!("Listing last \x1b[1;37m{} \x1b[1;34mversions.", packages.len()));
 
@@ -167,13 +167,13 @@ async fn main() -> Result<(), reqwest::Error> {
 
             }
 
-            let package = &packages[helper::select_package(&packages
+            let package = &packages[aur::select_package(&packages
                 .clone()
                 .into_iter()
                 .map(| i | i.split("[.]").collect::<Vec<&str>>()[..3].join(" "))
                 .collect::<Vec<String>>())];
 
-            helper::install_downgrade(package.split("[.]").collect::<Vec<&str>>()[3], args.file_path, args.keep, args.pkgbuild, args.noconfirm)
+            aur::install_downgrade(package.split("[.]").collect::<Vec<&str>>()[3], args.file_path, args.keep, args.pkgbuild, args.noconfirm)
                 .await
                 .expect(&format!("{ERROR} Failed to install downgrade."));
         
