@@ -51,6 +51,7 @@ $ make install
 | --pkgbuild | Shows PKGBUILD before install | - |
 | --status | Check Archive and AUR status | - |
 | --upgrade | Self update 'opio' to latest version | - |
+| --noconfirm | Install package without prompt confirmation | - |
 | -h, --help | Print help | - |
 | -V, --version | Print version | - |
 
