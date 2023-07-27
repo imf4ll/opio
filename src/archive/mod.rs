@@ -103,8 +103,6 @@ pub async fn download_package(package_path: String, package_name: &str, package:
         .progress_chars("❚."));
 
     println!("\n\x1b[1;34m✔ Downloading:\x1b[m {package_name}...\n");
- 
-
     
     tokio::task::spawn({
         let mut file = file.try_clone().await.unwrap();
